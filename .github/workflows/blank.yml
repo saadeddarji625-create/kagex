@@ -1,0 +1,43 @@
+name: ASSTAXIT IPA Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Download Project
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: xcode-select -p
+
+      - name: Build ASSTAXIT
+        run: |
+          xcodebuild \
+            -project ThreeOneOSFive.xcodeproj \
+            -scheme OGIOS \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Package IPA
+        run: |
+          APP=$(find build/Build/Products/Release-iphoneos \
+            -maxdepth 1 -name "*.app" -print -quit)
+
+          test -n "$APP"
+
+          mkdir -p Payload
+          cp -R "$APP" Payload/
+          zip -r ASSTAXIT.ipa Payload
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASSTAXIT-IPA
+          path: ASSTAXIT.ipa
